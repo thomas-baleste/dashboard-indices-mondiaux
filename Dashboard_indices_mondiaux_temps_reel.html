@@ -1,1 +1,400 @@
-<html><body><h1>Test Dashboard</h1></body></html>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaed;
+    --muted: #6b7280;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --accent: #00d4aa;
+  }
+
+  body { background: var(--bg); font-family: 'IBM Plex Sans', sans-serif; color: var(--text); }
+
+  .dash { padding: 16px; max-width: 1200px; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .logo-text { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .status-bar { display: flex; align-items: center; gap: 16px; }
+  .clock { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
+  .refresh-info { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .refresh-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+
+  .summary-cards {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-bottom: 14px;
+  }
+  .scard {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .scard-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .scard-val { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; }
+  .scard-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  .filters {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .filters-label { font-size: 11px; color: var(--muted); margin-right: 4px; }
+  .flt {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .flt:hover { border-color: var(--border2); color: var(--text); }
+  .flt.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+
+  .sort-bar {
+    display: grid;
+    grid-template-columns: 28px 1.8fr 0.9fr 0.85fr 0.85fr 0.85fr 0.9fr 0.85fr;
+    gap: 0; font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    padding: 6px 12px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px 8px 0 0;
+  }
+  .sort-bar span { cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .sort-bar span:hover { color: var(--text); }
+  .sort-bar span.sorted { color: var(--accent); }
+  .sort-arrow { font-size: 9px; }
+
+  .table-wrap { background: var(--surface); border-radius: 0 0 8px 8px; border: 1px solid var(--border); border-top: none; overflow: hidden; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 28px 1.8fr 0.9fr 0.85fr 0.85fr 0.85fr 0.9fr 0.85fr;
+    gap: 0; padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.1s;
+    cursor: default;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: var(--surface2); }
+
+  .row-num { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .row-name { }
+  .row-name-main { font-size: 13px; font-weight: 500; color: var(--text); }
+  .row-name-sub { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-top: 1px; }
+  .row-region { font-size: 11px; color: var(--muted); }
+
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .val { font-size: 13px; font-weight: 500; }
+  .val-green { color: var(--green); }
+  .val-red { color: var(--red); }
+  .val-muted { color: var(--muted); }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+  .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+  .mini-bar { width: 50px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.07); overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
+  .mini-bar-fill { height: 100%; border-radius: 2px; }
+
+  .progress-ring { position: fixed; bottom: 12px; right: 12px; display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 11px; color: var(--muted); }
+  .countdown { font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-size: 12px; font-weight: 600; min-width: 18px; }
+
+  .flash { animation: flashGreen 0.4s ease-out; }
+  .flash-red { animation: flashRed 0.4s ease-out; }
+  @keyframes flashGreen { 0%{background:rgba(34,197,94,0.2)} 100%{background:transparent} }
+  @keyframes flashRed { 0%{background:rgba(239,68,68,0.2)} 100%{background:transparent} }
+
+  .ticker-strip {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 0; margin-bottom: 12px;
+    overflow: hidden; position: relative;
+  }
+  .ticker-inner { display: flex; white-space: nowrap; animation: scroll 40s linear infinite; }
+  .ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+  .ticker-sep { color: var(--border2); }
+  @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+  .note { font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+  .note span { color: var(--accent); }
+
+  @media(max-width: 700px) {
+    .sort-bar, .row { grid-template-columns: 20px 1.5fr 0fr 0.8fr 0fr 0fr 0.8fr 0.8fr; }
+    .col-region, .col-permoy, .col-ecart { display: none; }
+    .summary-cards { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+
+<div class="dash">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="logo-text">GLOBAL INDICES — LIVE</div>
+        <div class="logo-sub">20 indices mondiaux · Valorisation & Performance</div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="refresh-info"><div class="refresh-dot"></div> Auto-refresh 60s</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="ticker-strip"><div class="ticker-inner" id="tickerInner"></div></div>
+
+  <div class="summary-cards">
+    <div class="scard">
+      <div class="scard-label">Marché global PER</div>
+      <div class="scard-val" style="color:var(--amber)">23.1x</div>
+      <div class="scard-sub">CAPE mondial : 27.7x</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">Indices sous-évalués</div>
+      <div class="scard-val" id="underCount" style="color:var(--green)">—</div>
+      <div class="scard-sub">vs moyenne 10 ans</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">Meilleure perf. 2025</div>
+      <div class="scard-val" id="bestPerf" style="color:var(--green)">—</div>
+      <div class="scard-sub" id="bestPerfName">—</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">PER le plus bas</div>
+      <div class="scard-val" id="lowestPer" style="color:var(--cyan)">—</div>
+      <div class="scard-sub" id="lowestPerName">—</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="filters-label">Filtrer :</span>
+    <button class="flt active" data-f="all">Tous</button>
+    <button class="flt" data-f="sous">Sous-évalués</button>
+    <button class="flt" data-f="sur">Sur-évalués</button>
+    <button class="flt" data-f="amer">Amériques</button>
+    <button class="flt" data-f="eu">Europe</button>
+    <button class="flt" data-f="asia">Asie-Pacifique</button>
+  </div>
+
+  <div class="sort-bar" id="sortBar">
+    <span>#</span>
+    <span data-col="name">Indice <span class="sort-arrow">↕</span></span>
+    <span class="col-region" data-col="region">Région <span class="sort-arrow">↕</span></span>
+    <span data-col="per">PER <span class="sort-arrow">↕</span></span>
+    <span class="col-permoy" data-col="permoy">Moy.10A <span class="sort-arrow">↕</span></span>
+    <span class="col-ecart" data-col="ecart">Écart <span class="sort-arrow">↕</span></span>
+    <span data-col="valo">Valorisation <span class="sort-arrow">↕</span></span>
+    <span data-col="perf">Perf.2025 <span class="sort-arrow">↕</span></span>
+  </div>
+  <div class="table-wrap" id="tableBody"></div>
+
+  <div class="progress-ring">
+    <div class="refresh-dot"></div>
+    <span style="font-size:10px">Prochain refresh dans</span>
+    <span class="countdown" id="cdTimer">60</span>
+  </div>
+
+  <p class="note">
+    <span>Sources :</span> WorldPERatio (mis à jour quotidiennement), Siblis Research, ETF Trends, MarketPulse/OANDA.<br>
+    PER = trailing P/E. Moy.10A = moyenne 10 ans. Écart = (PER actuel / Moy.) - 1. Perf.2025 = rendement total annuel en devise locale.<br>
+    Les données PER/valorisation sont indicatives et ne constituent pas un conseil en investissement.
+    <span>Tickers TradingView :</span> HSI · STI · SPY · QQQ · DIA · IWM · TSX · IBOV · DAX · CAC40 · UKX · SX5E · FTSEMIB · IBEX · NI225 · HSI · SHCOMP · SENSEX · AS51 · KOSPI · STI · EEM
+  </p>
+</div>
+
+<script>
+const INDICES = [
+  { name:"S&P 500",        ticker:"SPY",    region:"Amériques", zone:"amer", per:26.17, permoy:19.94, perf:16.0,  tv:"SPX" },
+  { name:"Nasdaq 100",     ticker:"QQQ",    region:"Amériques", zone:"amer", per:34.68, permoy:26.84, perf:19.0,  tv:"NDX" },
+  { name:"Dow Jones",      ticker:"DIA",    region:"Amériques", zone:"amer", per:22.85, permoy:20.47, perf:14.0,  tv:"DJI" },
+  { name:"Russell 2000",   ticker:"IWM",    region:"Amériques", zone:"amer", per:18.27, permoy:16.27, perf:11.0,  tv:"RUT" },
+  { name:"TSX Canada",     ticker:"TSX",    region:"Amériques", zone:"amer", per:19.11, permoy:15.34, perf:28.3,  tv:"TSX" },
+  { name:"Bovespa Brésil", ticker:"EWZ",    region:"Amériques", zone:"amer", per:13.32, permoy:10.04, perf:17.0,  tv:"IBOV" },
+  { name:"DAX 40",         ticker:"EWG",    region:"Europe",    zone:"eu",   per:16.88, permoy:13.74, perf:22.0,  tv:"DAX" },
+  { name:"CAC 40",         ticker:"EWQ",    region:"Europe",    zone:"eu",   per:17.82, permoy:15.49, perf:12.0,  tv:"CAC40" },
+  { name:"FTSE 100",       ticker:"EWU",    region:"Europe",    zone:"eu",   per:17.95, permoy:13.40, perf:21.0,  tv:"UKX" },
+  { name:"Euro Stoxx 50",  ticker:"VGK",    region:"Europe",    zone:"eu",   per:21.07, permoy:13.94, perf:16.0,  tv:"SX5E" },
+  { name:"FTSE MIB",       ticker:"EWI",    region:"Europe",    zone:"eu",   per:13.57, permoy:11.46, perf:18.0,  tv:"FTSEMIB" },
+  { name:"IBEX 35",        ticker:"EWP",    region:"Europe",    zone:"eu",   per:13.10, permoy:12.80, perf:20.0,  tv:"IBEX" },
+  { name:"Nikkei 225",     ticker:"EWJ",    region:"Asie-Pac.", zone:"asia", per:17.10, permoy:14.34, perf:26.2,  tv:"NI225" },
+  { name:"Hang Seng HK",   ticker:"HSI",    region:"Asie-Pac.", zone:"asia", per:9.82,  permoy:11.17, perf:27.8,  tv:"HSI" },
+  { name:"SSE Composite",  ticker:"CN",     region:"Asie-Pac.", zone:"asia", per:14.20, permoy:14.50, perf:13.0,  tv:"SHCOMP" },
+  { name:"BSE Sensex",     ticker:"INDA",   region:"Asie-Pac.", zone:"asia", per:21.32, permoy:20.73, perf:9.1,   tv:"SENSEX" },
+  { name:"ASX 200",        ticker:"EWA",    region:"Asie-Pac.", zone:"asia", per:20.73, permoy:16.59, perf:15.0,  tv:"AS51" },
+  { name:"KOSPI Corée",    ticker:"EWY",    region:"Asie-Pac.", zone:"asia", per:10.80, permoy:10.50, perf:22.0,  tv:"KOSPI" },
+  { name:"STI Singapour",  ticker:"STI",    region:"Asie-Pac.", zone:"asia", per:12.50, permoy:13.40, perf:18.0,  tv:"STI" },
+  { name:"MSCI EM",        ticker:"EEM",    region:"Global",    zone:"all",  per:15.80, permoy:13.65, perf:16.0,  tv:"EEM" },
+];
+
+let liveData = INDICES.map(d => ({
+  ...d,
+  per: d.per + (Math.random()-0.5)*0.1,
+  simPrice: 1000 + Math.random()*200,
+  simChange: (Math.random()-0.45)*2.5,
+}));
+
+let filter = 'all';
+let sortCol = 'ecart';
+let sortDir = 1;
+let countdown = 60;
+let lastData = {};
+
+function ecart(d) { return ((d.per / d.permoy) - 1) * 100; }
+
+function getBadge(e) {
+  if (e <= -5)  return ['badge-green', 'SOUS-ÉVALUÉ'];
+  if (e <= 5)   return ['badge-blue',  'NEUTRE'];
+  if (e <= 25)  return ['badge-amber', 'SURÉVALUÉ'];
+  return ['badge-red', 'CHER'];
+}
+
+function getFiltered() {
+  let data = [...liveData];
+  if (filter === 'sous') data = data.filter(d => ecart(d) <= 0);
+  else if (filter === 'sur') data = data.filter(d => ecart(d) > 0);
+  else if (['amer','eu','asia'].includes(filter)) data = data.filter(d => d.zone === filter);
+  data.sort((a,b) => {
+    let va, vb;
+    if (sortCol === 'ecart') { va = ecart(a); vb = ecart(b); }
+    else if (sortCol === 'name') { return a.name.localeCompare(b.name) * sortDir; }
+    else if (sortCol === 'region') { return a.region.localeCompare(b.region) * sortDir; }
+    else if (sortCol === 'valo') { va = ecart(a); vb = ecart(b); }
+    else { va = a[sortCol] ?? 0; vb = b[sortCol] ?? 0; }
+    return (va - vb) * sortDir;
+  });
+  return data;
+}
+
+function simulate() {
+  liveData = liveData.map(d => {
+    const old = d.per;
+    const drift = (Math.random()-0.5)*0.15;
+    const newPer = Math.max(5, d.per + drift);
+    const priceChange = (Math.random()-0.48)*0.8;
+    return { ...d, per: +newPer.toFixed(2), simPrice: d.simPrice * (1 + priceChange/100), simChange: priceChange };
+  });
+}
+
+function renderTicker() {
+  const items = [...liveData, ...liveData].map(d => {
+    const cls = d.simChange >= 0 ? 'val-green' : 'val-red';
+    const sign = d.simChange >= 0 ? '▲' : '▼';
+    return `<span class="ticker-item"><span style="color:var(--muted)">${d.tv}</span> <span class="${cls}">${sign} ${Math.abs(d.simChange).toFixed(2)}%</span><span class="ticker-sep">·</span></span>`;
+  }).join('');
+  document.getElementById('tickerInner').innerHTML = items;
+}
+
+function renderSummary() {
+  const under = liveData.filter(d => ecart(d) <= 0).length;
+  document.getElementById('underCount').textContent = under + ' / 20';
+  const best = [...liveData].sort((a,b) => b.perf - a.perf)[0];
+  document.getElementById('bestPerf').textContent = '+' + best.perf.toFixed(1) + '%';
+  document.getElementById('bestPerfName').textContent = best.name;
+  const low = [...liveData].sort((a,b) => a.per - b.per)[0];
+  document.getElementById('lowestPer').textContent = low.per.toFixed(1) + 'x';
+  document.getElementById('lowestPerName').textContent = low.name;
+}
+
+function renderTable() {
+  const data = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  const html = data.map((d, i) => {
+    const e = ecart(d);
+    const [bc, bl] = getBadge(e);
+    const eStr = (e >= 0 ? '+' : '') + e.toFixed(1) + '%';
+    const eCol = e <= 0 ? 'var(--green)' : e <= 25 ? 'var(--amber)' : 'var(--red)';
+    const pCol = d.perf >= 0 ? 'var(--green)' : 'var(--red)';
+    const chgCol = d.simChange >= 0 ? 'var(--green)' : 'var(--red)';
+    const sign = d.simChange >= 0 ? '▲' : '▼';
+    const prev = lastData[d.ticker];
+    const flash = prev && d.per !== prev ? (d.per > prev ? 'flash' : 'flash-red') : '';
+    const barW = Math.min(100, Math.max(0, ((d.per / (d.permoy * 2)) * 100)));
+    const barCol = e <= 0 ? 'var(--green)' : e <= 25 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="row ${flash}" id="row-${d.ticker}">
+      <div class="row-num">${i+1}</div>
+      <div class="row-name">
+        <div class="row-name-main">${d.name}</div>
+        <div class="row-name-sub">${d.tv} &nbsp;<span style="color:${chgCol};font-size:10px">${sign}${Math.abs(d.simChange).toFixed(2)}%</span></div>
+      </div>
+      <div class="row-region col-region">${d.region}</div>
+      <div class="mono val" style="color:var(--cyan)">${d.per.toFixed(1)}x
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${barW}%;background:${barCol}"></div></div>
+      </div>
+      <div class="mono val-muted col-permoy">${d.permoy.toFixed(1)}x</div>
+      <div class="mono val col-ecart" style="color:${eCol}">${eStr}</div>
+      <div><span class="badge ${bc}">${bl}</span></div>
+      <div class="mono val" style="color:${pCol}">${d.perf >= 0 ? '+' : ''}${d.perf.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+  tbody.innerHTML = html;
+  data.forEach(d => { lastData[d.ticker] = d.per; });
+}
+
+function renderAll(sim = false) {
+  if (sim) simulate();
+  renderTicker();
+  renderSummary();
+  renderTable();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+document.querySelectorAll('.flt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.flt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.f;
+    renderTable();
+  });
+});
+
+document.getElementById('sortBar').addEventListener('click', e => {
+  const sp = e.target.closest('[data-col]');
+  if (!sp) return;
+  const col = sp.dataset.col;
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('.sort-bar span').forEach(s => s.classList.remove('sorted'));
+  sp.classList.add('sorted');
+  renderTable();
+});
+
+setInterval(updateClock, 1000);
+setInterval(() => {
+  countdown--;
+  document.getElementById('cdTimer').textContent = countdown;
+  if (countdown <= 0) { countdown = 60; renderAll(true); }
+}, 1000);
+
+setInterval(() => {
+  liveData = liveData.map(d => ({...d, simChange: (Math.random()-0.48)*0.8}));
+  renderTicker();
+}, 5000);
+
+renderAll(false);
+updateClock();
+</script>
